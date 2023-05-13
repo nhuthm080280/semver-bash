@@ -5,5 +5,5 @@ inspect_args
 
 echo "before $(red this is red args "${args[source]}") after"
 echo "before $(green_bold this is green_bold) after"
-
-git_branch_must_have_semver "calling git branch validation"
+echo "cyan_underlined $(cyan_underlined okhowareyou)"
+# git_branch_must_have_semver "calling git branch validation"

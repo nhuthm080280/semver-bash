@@ -8,3 +8,8 @@ build/*
 
 pkg/adaptors/github/openapi/*
 !pkg/adaptors/github/openapi/.gitkeep
+
+.secrets
+.secrets.*
+
+test/sandbox
