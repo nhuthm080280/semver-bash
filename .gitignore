@@ -1,0 +1,10 @@
+# specs/openapi/vendor/*[.yml,yaml,.json,.xml,.specs]
+
+vendor/*
+!vendor/.gitkeep
+
+build/*
+!build/.gitkeep
+
+pkg/adaptors/github/openapi/*
+!pkg/adaptors/github/openapi/.gitkeep
