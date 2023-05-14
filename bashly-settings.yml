@@ -54,4 +54,4 @@ usage_colors:
   command: yellow_bold
   arg: green
   flag: cyan_bold
-  environment_variable: cyan_underline
+  environment_variable: cyan_underlined

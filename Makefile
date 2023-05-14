@@ -27,12 +27,12 @@ unit-tests:
 	./bin/beandev.sh unit-tests
 
 .PHONY: feature-tests
-feature-tests:
-	./test/bats/bin/bats test/
+e2e-tests:
+	./test/bats/bin/bats test/e2e
 
 .PHONY: tests
-tests: build feature-tests unit-tests
+tests: build e2e-tests unit-tests
 
 .PHONY: run-dev
 run-dev: dev
-	./build/cli $(args)
+	./build/semver $(args)

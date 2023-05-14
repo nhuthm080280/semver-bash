@@ -3,7 +3,6 @@
 PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null 2>&1 && pwd )"
 cd "${PROJECT_ROOT}"
 
-printf "\nproject root is ${PROJECT_ROOT}\n"
 
 # shellcheck source=bin/config.sh
 source bin/config.sh
@@ -101,13 +100,28 @@ case $1 in
     ;;
 
     unit-tests)
-        test_paths=($(find pkg  -not -path "*/test_helper/*"  -not -path "*/bats/*" -type f -name "*.bats"))
-  
+        test_paths=($(find .  -not -path "*/test_helper/*"  -not -path "*/bats/*" -not -path "*/test/*" -type f -name "*.bats"))
         for test_path in "${test_paths[@]}"
         do
             # echo test_path "${test_path}"
             PROJECT_ROOT=${PROJECT_ROOT} ./test/bats/bin/bats "${test_path}"
         done
+
+        # pkg_test_paths=($(find pkg  -not -path "*/test_helper/*"  -not -path "*/bats/*" -type f -name "*.bats"))  
+        # for test_path in "${pkg_test_paths[@]}"
+        # do
+        #     # echo test_path "${test_path}"
+        #     PROJECT_ROOT=${PROJECT_ROOT} ./test/bats/bin/bats "${test_path}"
+        # done
+
+        # cmd_test_paths=($(find cmd  -not -path "*/test_helper/*"  -not -path "*/bats/*" -type f -name "*.bats"))
+  
+        # for test_path in "${cmd_test_paths[@]}"
+        # do
+        #     # echo test_path "${test_path}"
+        #     PROJECT_ROOT=${PROJECT_ROOT} ./test/bats/bin/bats "${test_path}"
+        # done
+
     ;;
 
     *)
