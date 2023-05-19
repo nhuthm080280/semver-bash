@@ -18,11 +18,6 @@
 git clone --recurse-submodules git@github.com:BeanContinuous/semver-bash.git
 ```
 
-- To run `semver get` in dev environment, simply run
-```
-GIT_PLATFORM=GitHub make run-dev args="get"
-```
-
 - Setup GitHub PAT for E2E tests
 Create file `test/.secrets` then put the GitHub PAT as below:
 ```
@@ -49,6 +44,13 @@ make unit-tests
 make e2e-tests
 ```
 
+- To run `semver -h` in dev environment, simply run
+```
+source test/.envrc
+source test/.secrets
+GIT_PLATFORM=GitHub make run-dev args="-h"
+```
+
 
 ### GitHub OpenApi
 #### Where to find documentation for the Github OpenApi generated bash files
@@ -57,7 +59,7 @@ make e2e-tests
 
 #### How to test execute_github_api bash function in a standalone shell session
 
-1. `export PROJECT_ROOT=` absolute path to the project folder. On my machine, this was set to something like `${PROJECT_ROOT}`
+1. `export PROJECT_ROOT=` absolute path to the project folder. On my machine, this was set to something like `/home/peterbean/workspace/bean/continuous/semver-bash`
 2. Setup shell environment
 ```
 source ${PROJECT_ROOT}/test/.secrets 
