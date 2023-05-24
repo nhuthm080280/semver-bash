@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 
-function detect_git_platform {
+#######################################
+# Detect the configured Git platform and set the detected valuer to GIT_PLATFORM global or return error if the Git platform is not supported
+# Globals:
+#   GITHUB_REPOSITORY_NAME
+#   GITHUB_REPOSITORY_OWNER
+#   GIT_PLATFORM
+#   to_exit
+# Arguments:
+#  None
+#######################################
+function detect_git_platform() {
     if [[ -z "${GIT_PLATFORM}" ]]; then
         GIT_PLATFORM=GitHub
     fi

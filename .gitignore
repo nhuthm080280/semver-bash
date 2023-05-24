@@ -1,3 +1,4 @@
+.idea
 # specs/openapi/vendor/*[.yml,yaml,.json,.xml,.specs]
 
 vendor/*
