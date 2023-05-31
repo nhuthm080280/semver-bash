@@ -1,5 +1,42 @@
 #!/usr/bin/env bash
 
+TASK_NAME=$1
+if [ -z "$TASK_NAME" ]; then
+    echo "Please specify the task name"
+    exit 1
+fi
+RELEASE_VERSION=$2
+
+if [ -z "$RELEASE_VERSION" ] && [ "$TASK_NAME" = "release" ]
+then
+    echo "Please specify the version which you want to release"
+    exit 1
+fi
+# Specify the YAML file path
+app_file="specs/bashly/app.yml"
+key_version="version"
+
+# Read the section/block from the YAML file TODO need update ci pipeline to include yq lib
+version=$(yq eval '.version' "$app_file")
+
+# Print the section
+echo "$version"
+
+# check current branch
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$current_branch" = "master" ]; then
+    echo "Current branch is master"
+else
+    if [ "$version" = "v0.1.0-alpha" ]; then # TODO the version in the requirement is v0.1.0-alpha+100
+        # Use yq to update the YAML file
+        yq eval ".$key_version = \"$RELEASE_VERSION\"" -i "$app_file"
+        make build
+        git checkout specs/bashly/app.yml
+    fi
+    echo "Current branch is not master"
+fi
+
 PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null 2>&1 && pwd )"
 cd "${PROJECT_ROOT}"
 
