@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# check current branch
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+latest_tag=$(git rev-parse -q --verify "refs/tags/latest")
+nightly_tag=$(git rev-parse -q --verify "refs/tags/nightly")
 TASK_NAME=$1
 if [ -z "$TASK_NAME" ]; then
     echo "Please specify the task name"
@@ -7,7 +11,7 @@ if [ -z "$TASK_NAME" ]; then
 fi
 RELEASE_VERSION=$2
 
-if [ -z "$RELEASE_VERSION" ] && [ "$TASK_NAME" = "release" ]
+if [ -z "$RELEASE_VERSION" ] && [ "$TASK_NAME" = "release" ] && [ "$current_branch" != "master" ]
 then
     echo "Please specify the version which you want to release"
     exit 1
@@ -22,17 +26,58 @@ version=$(yq eval '.version' "$app_file")
 # Print the section
 echo "$version"
 
-# check current branch
-current_branch=$(git rev-parse --abbrev-ref HEAD)
-
 if [ "$current_branch" = "master" ]; then
     echo "Current branch is master"
+    # AC 3
+    if [ "$version" = "v0.1.0-alpha" ] && [-z $nightly_tag]
+        then
+            echo "Start nightly build"
+            # Tag the current commit as 'nightly'
+            git tag nightly
+            # Push the newly created 'nightly' tag to remote origin
+
+            git push origin nightly
+            echo "Tag 'nightly' has been created and pushed to remote origin."
+    elif [ "$version" = "v0.1.0-beta+500"] && [ -z $latest_tag ] # AC4
+        then
+            echo "AC 5: Releasing the current version"
+    elif [ "$version" = "v0.1.0"] && [ -z $latest_tag]# AC5
+            # TODO: how to check if there is no latest tag?
+            then
+                echo "AC 5: the current version is already latest"
+                # Display the current version and delete/create 'latest' tag
+                echo "Current version is $app_version. Updating 'latest' tag..."
+                git tag -d latest
+                git tag latest
+                # Push the newly created 'latest' tag to remote origin
+                git push origin latest
+                echo "Tag 'latest' has been updated to the current commit and pushed to remote origin."
+    elif [ "$version" = "v0.1.0"] && [ latest_tag >/dev/null ]# AC6
+            then
+                echo "AC 6: the current version is already latest"
+                # Display the current version and delete/create 'latest' tag
+                echo "Current version is $app_version. Updating 'latest' tag..."
+                git tag -d latest
+                git tag latest
+                # Push the newly created 'latest' tag to remote origin
+                git push origin latest
+                echo "Tag 'latest' has been updated to the current commit and pushed to remote origin."
+    fi
 else
-    if [ "$version" = "v0.1.0-alpha" ]; then # TODO the version in the requirement is v0.1.0-alpha+100
-        # Use yq to update the YAML file
-        yq eval ".$key_version = \"$RELEASE_VERSION\"" -i "$app_file"
-        make build
-        git checkout specs/bashly/app.yml
+    # TODO the version in the requirement is v0.1.0-alpha+100
+    # AC 1
+    if [ "$version" = "v0.1.0-alpha" ]
+        then
+            # Use yq to update the YAML file
+            yq eval ".$key_version = \"$RELEASE_VERSION\"" -i "$app_file"
+            make build
+            git checkout specs/bashly/app.yml # todo remove this line when commit code
+    # AC 2
+    elif [ "$version" = "$RELEASE_VERSION"]
+        then
+            echo "The release version is latest."
+    else
+        echo "It's an unknown fruit"
     fi
     echo "Current branch is not master"
 fi
