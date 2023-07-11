@@ -1,6 +1,7 @@
 name: semver
 help: Semantic Versioning Application
-version: v0.1.0-beta+500
+version: v0.1.0-alpha
+
 environment_variables:
   - name: git_platform
     help: The git platform on which this app runs, possible values are GitHub and GitLab
