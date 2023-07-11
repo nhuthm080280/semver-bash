@@ -71,15 +71,22 @@ else
             # Use yq to update the YAML file
             yq eval ".$key_version = \"$RELEASE_VERSION\"" -i "$app_file"
             make build
-            git checkout specs/bashly/app.yml # todo remove this line when commit code
+            # git checkout specs/bashly/app.yml # for local testing
+            git add specs/bashly/app.yml
+            git commit -m "Update version to $version"
+            git push
+            echo "Pushed code to remote branch."
+            exit 0
     # AC 2
-    elif [ "$version" = "$RELEASE_VERSION"]
+    elif [ "$version" = "$RELEASE_VERSION" ]
         then
             echo "The release version is latest."
+            exit 0
     else
-        echo "It's an unknown fruit"
+        echo $version
+        echo "The version is not v0.1.0-beta+500 or " $RELEASE_VERSION
+        exit 0
     fi
-    echo "Current branch is not master"
 fi
 
 PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null 2>&1 && pwd )"
