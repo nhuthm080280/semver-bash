@@ -1,40 +1,42 @@
 #!/usr/bin/env bash
 
-# check current branch
 master_branch="master"
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 latest_tag_id=$(git rev-parse -q --verify "refs/tags/latest")
 latest_tag_name="latest"
 nightly_tag_id=$(git rev-parse -q --verify "refs/tags/nightly")
 nightly_tag_name="nightly"
-# nightly_tag_id=$(git rev-parse -q --verify "refs/tags/nightly_test")
+
 if [ -z "$nightly_tag_id" ]; then
     echo "nightly_tag_id"
-    exit 1
+    exit 0
 fi
+
 TASK_NAME=$1
 if [ -z "$TASK_NAME" ]; then
     echo "Please specify the task name"
-    exit 1
+    exit 0
 fi
+
 RELEASE_VERSION=$2
 
 if [ -z "$RELEASE_VERSION" ] && [ "$TASK_NAME" = "release" ] && [ "$current_branch" != $master_branch ]
 then
     echo "Please specify the version which you want to release"
-    exit 1
+    exit 0
 fi
+
 # Specify the YAML file path
 app_file="specs/bashly/app.yml"
 key_version="version"
 
 # Read the section/block from the YAML file TODO need update ci pipeline to include yq lib
+# TODO we may need to install yq before running this script
 version=$(yq eval '.version' "$app_file")
 
 # Print the section
 echo "$version"
 
-# if [ "$current_branch" = "master" ]; then
 if [ "$current_branch" = "$master_branch" ]; then
     echo "Current branch is $master_branch"
     # AC 3
@@ -48,7 +50,7 @@ if [ "$current_branch" = "$master_branch" ]; then
 
             git push origin $nightly_tag_name
             echo "Tag 'nightly' has been created and pushed to remote origin."
-            exit;
+            exit 0
     elif [ "$version" = "v0.1.0-beta+500" ] && [ -z $latest_tag_id ] # AC4
         then
             echo "Releasing the current version"
@@ -59,6 +61,7 @@ if [ "$current_branch" = "$master_branch" ]; then
             git tag nightly
             git push origin nightly
             echo "Tag 'nightly' has been created and pushed to remote origin."
+            exit 0
     elif [ "$version" = "v0.1.0" ] && [ -z $latest_tag_id ] # AC5
             then
                 echo "The current version is already latest"
@@ -67,6 +70,7 @@ if [ "$current_branch" = "$master_branch" ]; then
                 git tag $latest_tag_name
                 git push origin $latest_tag_name
                 echo "Tag 'latest' has been updated to the current commit and pushed to remote origin."
+                exit 0
     elif [ "$version" = "v0.1.0" ] && [ latest_tag_id >/dev/null ] # AC6
             then
                 echo "The current version is already latest"
@@ -78,6 +82,7 @@ if [ "$current_branch" = "$master_branch" ]; then
                 git tag $latest_tag_name
                 git push origin $latest_tag_name
                 echo "Tag 'latest' has been updated to the current commit and pushed to remote origin."
+                exit 0
     fi
 else
     # AC 1
