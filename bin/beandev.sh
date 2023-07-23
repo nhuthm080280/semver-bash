@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 
 # check current branch
+master_branch="master"
 current_branch=$(git rev-parse --abbrev-ref HEAD)
-latest_tag=$(git rev-parse -q --verify "refs/tags/latest")
-nightly_tag=$(git rev-parse -q --verify "refs/tags/nightly")
+latest_tag_id=$(git rev-parse -q --verify "refs/tags/latest")
+latest_tag_name="latest"
+nightly_tag_id=$(git rev-parse -q --verify "refs/tags/nightly")
+nightly_tag_name="nightly"
+# nightly_tag_id=$(git rev-parse -q --verify "refs/tags/nightly_test")
+if [ -z "$nightly_tag_id" ]; then
+    echo "nightly_tag_id"
+    exit 1
+fi
 TASK_NAME=$1
 if [ -z "$TASK_NAME" ]; then
     echo "Please specify the task name"
@@ -11,7 +19,7 @@ if [ -z "$TASK_NAME" ]; then
 fi
 RELEASE_VERSION=$2
 
-if [ -z "$RELEASE_VERSION" ] && [ "$TASK_NAME" = "release" ] && [ "$current_branch" != "master" ]
+if [ -z "$RELEASE_VERSION" ] && [ "$TASK_NAME" = "release" ] && [ "$current_branch" != $master_branch ]
 then
     echo "Please specify the version which you want to release"
     exit 1
@@ -26,45 +34,52 @@ version=$(yq eval '.version' "$app_file")
 # Print the section
 echo "$version"
 
-if [ "$current_branch" = "master" ]; then
-    echo "Current branch is master"
+# if [ "$current_branch" = "master" ]; then
+if [ "$current_branch" = "$master_branch" ]; then
+    echo "Current branch is $master_branch"
     # AC 3
-    if [ "$version" = "v0.1.0-alpha" ] && [-z $nightly_tag]
+    if [ "$version" = "v0.1.0-beta+500" ] && [ -z $nightly_tag_id ]
         then
+            echo "The current version is already latest"
             echo "Start nightly build"
             # Tag the current commit as 'nightly'
-            git tag nightly
+            git tag $nightly_tag_name
             # Push the newly created 'nightly' tag to remote origin
 
+            git push origin $nightly_tag_name
+            echo "Tag 'nightly' has been created and pushed to remote origin."
+            exit;
+    elif [ "$version" = "v0.1.0-beta+500" ] && [ -z $latest_tag_id ] # AC4
+        then
+            echo "Releasing the current version"
+            git tag -d $nightly_tag_name
+            git push --delete origin $nightly_tag_name
+            echo "Deleted current nightly tag"
+
+            git tag nightly
             git push origin nightly
             echo "Tag 'nightly' has been created and pushed to remote origin."
-    elif [ "$version" = "v0.1.0-beta+500"] && [ -z $latest_tag ] # AC4
-        then
-            echo "AC 5: Releasing the current version"
-    elif [ "$version" = "v0.1.0"] && [ -z $latest_tag]# AC5
-            # TODO: how to check if there is no latest tag?
+    elif [ "$version" = "v0.1.0" ] && [ -z $latest_tag_id ] # AC5
             then
-                echo "AC 5: the current version is already latest"
-                # Display the current version and delete/create 'latest' tag
+                echo "The current version is already latest"
                 echo "Current version is $app_version. Updating 'latest' tag..."
-                git tag -d latest
-                git tag latest
-                # Push the newly created 'latest' tag to remote origin
-                git push origin latest
+
+                git tag $latest_tag_name
+                git push origin $latest_tag_name
                 echo "Tag 'latest' has been updated to the current commit and pushed to remote origin."
-    elif [ "$version" = "v0.1.0"] && [ latest_tag >/dev/null ]# AC6
+    elif [ "$version" = "v0.1.0" ] && [ latest_tag_id >/dev/null ] # AC6
             then
-                echo "AC 6: the current version is already latest"
-                # Display the current version and delete/create 'latest' tag
+                echo "The current version is already latest"
                 echo "Current version is $app_version. Updating 'latest' tag..."
-                git tag -d latest
-                git tag latest
-                # Push the newly created 'latest' tag to remote origin
-                git push origin latest
+                git tag -d $latest_tag_name
+                git push --delete origin $latest_tag_name
+                echo "Deleted $latest_tag_name"
+
+                git tag $latest_tag_name
+                git push origin $latest_tag_name
                 echo "Tag 'latest' has been updated to the current commit and pushed to remote origin."
     fi
 else
-    # TODO the version in the requirement is v0.1.0-alpha+100
     # AC 1
     if [ "$version" = "v0.1.0-alpha" ]
         then
