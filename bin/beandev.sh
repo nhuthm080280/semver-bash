@@ -20,11 +20,13 @@ fi
 
 RELEASE_VERSION=$2
 
+
 if [ -z "$RELEASE_VERSION" ] && [ "$TASK_NAME" = "release" ] && [ "$current_branch" != $master_branch ]
 then
     echo "Please specify the version which you want to release"
     exit 0
 fi
+
 
 # Specify the YAML file path
 app_file="specs/bashly/app.yml"
@@ -32,15 +34,15 @@ key_version="version"
 
 # Read the section/block from the YAML file TODO need update ci pipeline to include yq lib
 # TODO we may need to install yq before running this script
-version=$(yq eval '.version' "$app_file")
+current_version=$(yq eval '.version' "$app_file")
 
 # Print the section
-echo "$version"
+echo "$current_version"
 
 if [ "$current_branch" = "$master_branch" ]; then
     echo "Current branch is $master_branch"
     # AC 3
-    if [ "$version" = "v0.1.0-beta+500" ] && [ -z $nightly_tag_id ]
+    if [ "$current_version" = "$RELEASE_VERSION" ] && [ -z $nightly_tag_id ]
         then
             echo "The current version is already latest"
             echo "Start nightly build"
@@ -51,7 +53,7 @@ if [ "$current_branch" = "$master_branch" ]; then
             git push origin $nightly_tag_name
             echo "Tag 'nightly' has been created and pushed to remote origin."
             exit 0
-    elif [ "$version" = "v0.1.0-beta+500" ] && [ -z $latest_tag_id ] # AC4
+    elif [ "$current_version" = "$RELEASE_VERSION" ] && [ -z $latest_tag_id ] # AC4
         then
             echo "Releasing the current version"
             git tag -d $nightly_tag_name
@@ -62,7 +64,7 @@ if [ "$current_branch" = "$master_branch" ]; then
             git push origin nightly
             echo "Tag 'nightly' has been created and pushed to remote origin."
             exit 0
-    elif [ "$version" = "v0.1.0" ] && [ -z $latest_tag_id ] # AC5
+    elif [ "$current_version" = "$RELEASE_VERSION" ] && [ -z $latest_tag_id ] # AC5
             then
                 echo "The current version is already latest"
                 echo "Current version is $app_version. Updating 'latest' tag..."
@@ -71,7 +73,7 @@ if [ "$current_branch" = "$master_branch" ]; then
                 git push origin $latest_tag_name
                 echo "Tag 'latest' has been updated to the current commit and pushed to remote origin."
                 exit 0
-    elif [ "$version" = "v0.1.0" ] && [ latest_tag_id >/dev/null ] # AC6
+    elif [ "$current_version" = "$RELEASE_VERSION" ] && [ latest_tag_id >/dev/null ] # AC6
             then
                 echo "The current version is already latest"
                 echo "Current version is $app_version. Updating 'latest' tag..."
@@ -86,24 +88,24 @@ if [ "$current_branch" = "$master_branch" ]; then
     fi
 else
     # AC 1
-    if [ "$version" = "v0.1.0-alpha" ]
+    if [ "$current_version" = "$RELEASE_VERSION" ]
         then
             # Use yq to update the YAML file
             yq eval ".$key_version = \"$RELEASE_VERSION\"" -i "$app_file"
             make build
             # git checkout specs/bashly/app.yml # for local testing
             git add specs/bashly/app.yml
-            git commit -m "Update version to $version"
+            git commit -m "Update version to $current_version"
             git push
             echo "Pushed code to remote branch."
             exit 0
     # AC 2
-    elif [ "$version" = "$RELEASE_VERSION" ]
+    elif [ "$current_version" = "$RELEASE_VERSION" ]
         then
             echo "The release version is latest."
             exit 0
     else
-        echo $version
+        echo $current_version
         echo "The version is not v0.1.0-beta+500 or " $RELEASE_VERSION
         exit 0
     fi
