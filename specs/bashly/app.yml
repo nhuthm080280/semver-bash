@@ -1,6 +1,6 @@
 name: semver
 help: Semantic Versioning Application
-version: v0.1.0-alpha
+version: v0.1.0-alpha+100
 
 environment_variables:
 - name: git_platform
