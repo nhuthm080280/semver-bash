@@ -18,6 +18,9 @@ if [ "$TASK_NAME" = "release" ]; then
     # TODO we may need to install yq before running this script
     current_version=$(yq eval '.version' "$app_file")
 
+    # Regular expression pattern for semver
+    semver_pattern='^v[0-9]+\.[0-9]+\.[0-9]+(\-[0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*)?(\+[0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*)?$'
+
     # function getting sem version
     get_sem_version() {
         # shellcheck disable=SC2001
@@ -122,14 +125,9 @@ if [ "$TASK_NAME" = "release" ]; then
     master_branch="master"
     current_branch=$(git rev-parse --abbrev-ref HEAD)
     latest_tag_id=$(git rev-parse -q --verify "refs/tags/latest")
-    latest_tag_name="latest"
     nightly_tag_id=$(git rev-parse -q --verify "refs/tags/nightly")
     nightly_tag_name="nightly"
-
-    if [ -z "$nightly_tag_id" ]; then
-        echo "nightly_tag_id"
-        exit 0
-    fi
+    latest_tag_name="latest"
 
     if [ -z "$RELEASE_VERSION" ] && [ "$TASK_NAME" = "release" ] && [ "$current_branch" != $master_branch ]
     then
@@ -138,50 +136,60 @@ if [ "$TASK_NAME" = "release" ]; then
     fi
   if [ "$current_branch" = "$master_branch" ]; then
       echo "Current branch is $master_branch"
-      # AC 3
-      if [ "$current_version" = "$RELEASE_VERSION" ] && [ -z $nightly_tag_id ]
-          then
+      # Check if the input string matches the semver pattern
+      if [[ $current_version =~ $semver_pattern ]]; then
+          echo "Releasing supported version"
+          if [ -z "$latest_tag_id" ];
+              then
+                echo "The current version is already latest"
+                echo "Current version is $app_version. Updating 'latest' tag..."
+
+                git tag $latest_tag_name
+                git push origin $latest_tag_name
+                echo "Tag 'latest' has been updated to the current commit and pushed to remote origin."
+                echo pass ac 5
+                exit 0
+          else
               echo "The current version is already latest"
-              echo "Start nightly build"
-              # Tag the current commit as 'nightly'
-              git tag $nightly_tag_name
-              # Push the newly created 'nightly' tag to remote origin
+              echo "Current version is $app_version. Updating 'latest' tag..."
+              git tag -d $latest_tag_name
+              git push --delete origin $latest_tag_name
+              echo "Deleted $latest_tag_name"
 
-              git push origin $nightly_tag_name
-              echo "Tag 'nightly' has been created and pushed to remote origin."
+              git tag $latest_tag_name
+              git push origin $latest_tag_name
+              echo "Tag 'latest' has been updated to the current commit and pushed to remote origin."
+              echo pass ac 6
               exit 0
-      elif [ "$current_version" = "$RELEASE_VERSION" ] && [ -z $latest_tag_id ] # AC4
-          then
-              echo "Releasing the current version"
-              git tag -d $nightly_tag_name
-              git push --delete origin $nightly_tag_name
-              echo "Deleted current nightly tag"
+          fi
+      else
+          echo "Releasing nightly version"
+                # AC 3
+            if [ -z "$nightly_tag_id" ];
+                then
+                    echo "The current version is already latest"
+                    # Tag the current commit as 'nightly'
+                    git tag $nightly_tag_name
+                    # Push the newly created 'nightly' tag to remote origin
 
-              git tag nightly
-              git push origin nightly
-              echo "Tag 'nightly' has been created and pushed to remote origin."
-              exit 0
-      elif [ "$current_version" = "$RELEASE_VERSION" ] && [ -z $latest_tag_id ] # AC5
-              then
-                  echo "The current version is already latest"
-                  echo "Current version is $app_version. Updating 'latest' tag..."
+                    git push origin $nightly_tag_name
+                    echo "Tag 'nightly' has been created and pushed to remote origin."
+                    exit 0
+            elif [ "$latest_tag_name" = "$nightly_tag_name" ]; # AC4
+                then
+                    echo "Releasing the current version"
+                    git tag -d $nightly_tag_name
+                    git push --delete origin $nightly_tag_name
+                    echo "Deleted current nightly tag"
 
-                  git tag $latest_tag_name
-                  git push origin $latest_tag_name
-                  echo "Tag 'latest' has been updated to the current commit and pushed to remote origin."
-                  exit 0
-      elif [ "$current_version" = "$RELEASE_VERSION" ] && [ latest_tag_id >/dev/null ] # AC6
-              then
-                  echo "The current version is already latest"
-                  echo "Current version is $app_version. Updating 'latest' tag..."
-                  git tag -d $latest_tag_name
-                  git push --delete origin $latest_tag_name
-                  echo "Deleted $latest_tag_name"
-
-                  git tag $latest_tag_name
-                  git push origin $latest_tag_name
-                  echo "Tag 'latest' has been updated to the current commit and pushed to remote origin."
-                  exit 0
+                    git tag nightly
+                    git push origin nightly
+                    echo "Tag 'nightly' has been created and pushed to remote origin."
+                    echo "Pass ac 4"
+                    exit 0
+            else
+                    echo "Do nothing"
+            fi
       fi
   else
       # AC 1
