@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-TASK_NAME=$1
-if [ -z "$TASK_NAME" ]; then
-    echo "Please specify the task name"
-    exit 0
-fi
-
 # Print the section
-if [ "$TASK_NAME" = "release" ]; then
+release() {
+    TASK_NAME=$1
+    if [ -z "$TASK_NAME" ]; then
+        echo "Please specify the task name"
+        exit 0
+    fi
+
     RELEASE_VERSION=$2
 
     # Specify the YAML file path
@@ -118,7 +118,6 @@ if [ "$TASK_NAME" = "release" ]; then
         echo 1
     }
 
-    # Example usage:
     pre_release_result=$(compare_pre_release $CURRENT_PRE_RELEASE_VERSION $REQUEST_PRE_RELEASE_VERSION)
     compare_sem_versions_result=$(compare_sem_versions $CURRENT_SEM_VER $REQUEST_SEM_VER)
 
@@ -131,7 +130,7 @@ if [ "$TASK_NAME" = "release" ]; then
 
     if [ -z "$RELEASE_VERSION" ] && [ "$TASK_NAME" = "release" ] && [ "$current_branch" != $master_branch ]
     then
-        echo "Please specify the version which you want to release"
+        echo "Please specify the version which you want to release for the current branch $current_branch"
         exit 0
     fi
   if [ "$current_branch" = "$master_branch" ]; then
@@ -210,7 +209,7 @@ if [ "$TASK_NAME" = "release" ]; then
               exit 0
       fi
   fi
-fi
+}
 
 PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null 2>&1 && pwd )"
 cd "${PROJECT_ROOT}"
@@ -335,7 +334,9 @@ case $1 in
         # done
 
     ;;
-
+    release)
+       release $1 $2
+    ;;
     *)
         exit 0
     ;;
